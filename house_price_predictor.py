@@ -1,12 +1,13 @@
-from data import house_csv
-from mkdir import mkdir
+from utils.data import house_dataframe
+from model.model import Model
 
 class HousePrice:
-    def __init__(self) -> None:
-        self.house_data_csv = house_csv()
-        mkdir()
+    def __init__(self, model:Model) -> None:
+        self.model = model
+        self.house_data_dataframe = house_dataframe(self.model)
     
 
 
 if __name__ == "__main__":
-    house_price = HousePrice()
+    model = Model()
+    house_price = HousePrice(model)
