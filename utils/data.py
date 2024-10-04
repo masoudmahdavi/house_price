@@ -39,5 +39,13 @@ def extract_tar(model:Model, tar_base_dir:str) -> None:
             tar.extractall(path=tar_base_dir)
 
 def data_csv2df(csv_dir:str) -> pd.DataFrame:
+    """Read csv file as pandas DataFrame
+
+    Args:
+        csv_dir (str): csv directory
+
+    Returns:
+        pd.DataFrame: house price data in dataframe format
+    """
     df = pd.read_csv(csv_dir)
     return df
