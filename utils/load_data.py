@@ -15,10 +15,10 @@ def house_dataframe(model:Model) -> pd.DataFrame:
     Returns:
         pandas.Dataframe: house prices 
     """
-    model.tar_dir = os.path.join('data/housing.tgz')
+    model.tar_dir = os.path.join('data/house.tgz')
     tar_base_dir = os.path.dirname(model.tar_dir)
-    csv_dir = os.path.join(tar_base_dir, 'housing/housing.csv')
-    if not os.path.exists(model.tar_dir):
+    csv_dir = os.path.join(tar_base_dir, 'house_csv/house.csv')
+    if not os.path.exists(csv_dir):
         make_data_dir(tar_base_dir)
         download_data(model, tar_base_dir)
     if not os.path.exists(csv_dir):
@@ -32,7 +32,7 @@ def download_data() -> None:
     """Downloads data
     """
     url = "https://github.com/ageron/data/raw/main/housing.tgz"
-    urllib.request.urlretrieve(url, "housing.tgz")
+    urllib.request.urlretrieve(url, "house.tgz")
 
 def extract_tar(model:Model, tar_base_dir:str) -> None:
     with tarfile.open(model.tar_dir) as tar:
