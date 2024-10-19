@@ -28,7 +28,18 @@ class Describe:
                   #     print(f"Histogram for {column}:")
                   #     fig.show()
       
-      def data_visualization(self):
+      def data_visualization(self, base_map:bool=False):
             copy_data = self.data.copy()
-            copy_data.plot(kind='scatter', x="longitude", y="latitude", grid=True)
+            if base_map:
+                  self.visualization_on_basemap()
+            else:
+                  self.local_visual(copy_data)
+                  
             plt.show()
+
+      @staticmethod
+      def local_visual(data):
+            data.plot(kind='scatter', x="longitude", y="latitude", grid=True)
+
+      def visualization_on_basemap():
+            pass
