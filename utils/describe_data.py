@@ -1,6 +1,12 @@
 from model.model import Model
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import geopandas as gpd
+from shapely.geometry import Point, Polygon
+import contextily as ctx
+
+
 
 class Describe:
       def __init__(self, model:Model, data:pd.DataFrame):
@@ -31,15 +37,23 @@ class Describe:
       def data_visualization(self, base_map:bool=False):
             copy_data = self.data.copy()
             if base_map:
-                  self.visualization_on_basemap()
+                  self.visualization_on_basemap(copy_data)
             else:
                   self.local_visual(copy_data)
-                  
             plt.show()
 
       @staticmethod
-      def local_visual(data):
+      def local_visual(data:pd.DataFrame):
             data.plot(kind='scatter', x="longitude", y="latitude", grid=True)
 
-      def visualization_on_basemap():
-            pass
+      @staticmethod
+      def visualization_on_basemap(data:pd.DataFrame):
+            crs = {'init':'EPSG:4326'}
+            geometry = [Point(xy) for xy in zip (data['longitude'], data['latitude'])]
+            geo_df = gpd.GeoDataFrame(data,
+                                      crs=crs,
+                                      geometry=geometry)
+            
+            ax = geo_df.plot(figsize=(10, 10), alpha=0.5, edgecolor='k')
+            
+            ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
