@@ -55,9 +55,6 @@ class Describe:
                                       geometry=geometry)
             center_map = geo_df.geometry.y.mean(), geo_df.geometry.x.mean()
             map = folium.Map(location=center_map, zoom_start=8)
-            colormap = linear.YlGn_09.scale(
-                        geo_df.median_house_value.min(), geo_df.median_house_value.max())
-            
             
             limit = geo_df.median_house_value.max() - geo_df.median_house_value.min()
             step = limit // 10
@@ -69,13 +66,13 @@ class Describe:
             geo_df['house_value_cat'] = pd.cut(data['median_house_value'], 
                                         bins=[14000, 100000, 200000,300000,400000, 500009, np.inf], # np.inf means bigger than 6
                                         labels=[0,1,2,3,4,5])
-            
+            colormap = linear.YlOrRd_09.scale(0, 6)
             house_val_dict = geo_df.set_index('house_value_cat')['median_house_value']
             folium.GeoJson(
                   geo_df,
                   name = 'house price',
-                  marker = folium.Marker(icon=folium.DivIcon()),
-                  style_function= self.style_function,
+                  marker=folium.Circle(radius=300, fill_color="orange", fill_opacity=0.9, color="black", weight=0.8),
+                  style_function= lambda x:{'color':colormap(x['properties']['house_value_cat']),'fillColor':colormap(x['properties']['house_value_cat'])}
                   
             ).add_to(map)
             map.save('map.html')
@@ -85,7 +82,7 @@ class Describe:
       def style_function(self, feature):
             house_cat = feature['properties']['house_value_cat']
             
-            colormap = linear.YlGn_09.scale(0, 6)
+            colormap = linear.YlOrRd_09.scale(0, 6)
             markup = f"""
                         <div style="width: 10px;
                                     height: 10px;
