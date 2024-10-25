@@ -1,11 +1,12 @@
+from shapely.geometry import Point
+from branca.colormap import linear
 from model.model import Model
-import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
-import geopandas as gpd
-from shapely.geometry import Point, Polygon
-import contextily as ctx
 
+import matplotlib.pyplot as plt
+import geopandas as gpd
+import pandas as pd
+import numpy as np
+import folium
 
 
 class Describe:
@@ -45,15 +46,54 @@ class Describe:
       @staticmethod
       def local_visual(data:pd.DataFrame):
             data.plot(kind='scatter', x="longitude", y="latitude", grid=True)
-
-      @staticmethod
-      def visualization_on_basemap(data:pd.DataFrame):
+      
+      def visualization_on_basemap(self, data:pd.DataFrame):
             crs = {'init':'EPSG:4326'}
             geometry = [Point(xy) for xy in zip (data['longitude'], data['latitude'])]
             geo_df = gpd.GeoDataFrame(data,
                                       crs=crs,
                                       geometry=geometry)
+            center_map = geo_df.geometry.y.mean(), geo_df.geometry.x.mean()
+            map = folium.Map(location=center_map, zoom_start=8)
+            colormap = linear.YlGn_09.scale(
+                        geo_df.median_house_value.min(), geo_df.median_house_value.max())
             
-            ax = geo_df.plot(figsize=(10, 10), alpha=0.5, edgecolor='k')
             
-            ctx.add_basemap(ax, source=ctx.providers.CartoDB.Positron)
+            limit = geo_df.median_house_value.max() - geo_df.median_house_value.min()
+            step = limit // 10
+            labels= []
+            for i in range(0,10):
+                  labels.append(geo_df.median_house_value.min() + (i*step))
+            labels += [np.inf]
+            
+            geo_df['house_value_cat'] = pd.cut(data['median_house_value'], 
+                                        bins=[14000, 100000, 200000,300000,400000, 500009, np.inf], # np.inf means bigger than 6
+                                        labels=[0,1,2,3,4,5])
+            
+            house_val_dict = geo_df.set_index('house_value_cat')['median_house_value']
+            folium.GeoJson(
+                  geo_df,
+                  name = 'house price',
+                  marker = folium.Marker(icon=folium.DivIcon()),
+                  style_function= self.style_function,
+                  
+            ).add_to(map)
+            map.save('map.html')
+            map
+            # map.show_in_browser()
+      
+      def style_function(self, feature):
+            house_cat = feature['properties']['house_value_cat']
+            
+            colormap = linear.YlGn_09.scale(0, 6)
+            markup = f"""
+                        <div style="width: 10px;
+                                    height: 10px;
+                                    border: 1px solid black;
+                                    border-radius: 5px;
+                                    background-color: {colormap(house_cat)};
+                                    fill_color: red">
+                        </div> 
+                  
+            """
+            return {"html": markup}

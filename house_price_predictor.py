@@ -22,8 +22,6 @@ class HousePrice:
 
     def preprocess(self):
         train, test = self.preprocess_data.stratum_income(self.house_dataframe, split_n=10, hist=True)
-    
-        
         
 
 if __name__ == "__main__":
