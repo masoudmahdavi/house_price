@@ -2,6 +2,7 @@ from shapely.geometry import Point
 from branca.colormap import linear
 from model.model import Model
 
+import leafmap.foliumap as leafmap
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import pandas as pd
@@ -34,19 +35,30 @@ class Describe:
 
                   #     print(f"Histogram for {column}:")
                   #     fig.show()
-      
+      def add_folium_legend(self, map:leafmap.Map):
+            legend_dict = {
+                  "High": "red",
+                  "Medium": "yellow",
+                  "Low": "green"
+            }
+            map.add_legend(title='Legend Title', legend_dict=legend_dict)
+
+
       def data_visualization(self, base_map:bool=False):
             copy_data = self.data.copy()
             if base_map:
                   self.visualization_on_basemap(copy_data)
+                  
             else:
                   self.local_visual(copy_data)
-            plt.show()
+            
+            
 
       @staticmethod
       def local_visual(data:pd.DataFrame):
             data.plot(kind='scatter', x="longitude", y="latitude", grid=True)
-      
+            plt.show()
+
       def visualization_on_basemap(self, data:pd.DataFrame):
             crs = {'init':'EPSG:4326'}
             geometry = [Point(xy) for xy in zip (data['longitude'], data['latitude'])]
@@ -54,7 +66,7 @@ class Describe:
                                       crs=crs,
                                       geometry=geometry)
             center_map = geo_df.geometry.y.mean(), geo_df.geometry.x.mean()
-            map = folium.Map(location=center_map, zoom_start=8)
+            map = leafmap.Map(location=center_map, zoom_start=8)
             
             limit = geo_df.median_house_value.max() - geo_df.median_house_value.min()
             step = limit // 10
@@ -67,7 +79,6 @@ class Describe:
                                         bins=[14000, 100000, 200000,300000,400000, 500009, np.inf], # np.inf means bigger than 6
                                         labels=[0,1,2,3,4,5])
             colormap = linear.YlOrRd_09.scale(0, 6)
-            house_val_dict = geo_df.set_index('house_value_cat')['median_house_value']
             folium.GeoJson(
                   geo_df,
                   name = 'house price',
@@ -75,6 +86,7 @@ class Describe:
                   style_function= lambda x:{'color':colormap(x['properties']['house_value_cat']),'fillColor':colormap(x['properties']['house_value_cat'])}
                   
             ).add_to(map)
+            self.add_folium_legend(map)
             map.save('map.html')
             map
             # map.show_in_browser()
