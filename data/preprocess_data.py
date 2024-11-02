@@ -146,7 +146,11 @@ class PreProcessData:
             one_hot_encoder = OneHotEncoder()
             ocean_proximity_cat = dataframe[["ocean_proximity"]]
             encoded_cat = one_hot_encoder.fit_transform(ocean_proximity_cat)
-            return encoded_cat
+            df_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_proximity_cat.columns,
+                                          index=ocean_proximity_cat.index)
+            print(df_encoded_cat)
+            exit()
+            return df_encoded_cat
 
       def ordinal_encoder(self, dataframe:pd.DataFrame):
             ordinal_encoder = OrdinalEncoder()
