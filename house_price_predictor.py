@@ -25,6 +25,7 @@ class HousePrice:
         handled_text_df = self.preprocess_data.text_encoder(self.raw_house_dataframe,
                                                             method='one_hot_encoder', # 'one_hot_encoder' or 'ordinal_encoder'
                                                             ) 
+        
         print('Fix sparce df',handled_text_df)
         exit()
         cleaned_house_extended_df = self.preprocess_data.clean_miss_data(

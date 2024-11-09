@@ -179,33 +179,37 @@ class PreProcessData:
                                         Defaults to 'one_hot_encoder'.
 
             Returns:
-                pd.DataFrame: Dataframe without text format columns.
+                pd.DataFrame: Dataframe withouadd_encoded_to_dft text format columns.
             """
             ocean_prox_cat = dataframe[["ocean_proximity"]]
             if method == 'one_hot_encoder':
                   encoded_df = self.one_hot_encoder(ocean_prox_cat)
+                  encoded_df = self.add_encoded_to_df(encoded_df, dataframe)
             elif method == 'ordinal_encoder':
                   encoded_df = self.ordinal_encoder(ocean_prox_cat)
+                  encoded_df = self.add_encoded_to_df(encoded_df, dataframe)
             return encoded_df
 
       def one_hot_encoder(self, ocean_prox_cat):
 
             one_hot_encoder = OneHotEncoder()
             encoded_cat = one_hot_encoder.fit_transform(ocean_prox_cat)
-            df_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_prox_cat.columns,
+            csr_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_prox_cat.columns,
                                           index=ocean_prox_cat.index)
-            
-            return df_encoded_cat
+            return csr_encoded_cat
+
+      def add_encoded_to_df(self, encoded_df:pd.DataFrame, dataframe:pd.DataFrame) -> pd.DataFrame:
+            dataframe['ocean_proximity'] = encoded_df
+            return dataframe
 
       def ordinal_encoder(self, ocean_prox_cat):
             ordinal_encoder = OrdinalEncoder()
             encoded_cat = ordinal_encoder.fit_transform(ocean_prox_cat)
-            return encoded_cat
+            csr_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_prox_cat.columns,
+                                          index=ocean_prox_cat.index)
+            return csr_encoded_cat
       
-      def norm_num_data(self, num_dataframe:pd.DataFrame, norm_method:str):
-            print(num_dataframe)
-            
-            exit()
+      def norm_num_data(self, num_dataframe:pd.DataFrame, norm_method:str):            
             if norm_method == "min_max":
                   min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
                   norm_data_min_max = min_max_scaler.fit_transform(num_dataframe)
