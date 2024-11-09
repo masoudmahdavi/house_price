@@ -1,8 +1,10 @@
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import train_test_split
-from pandas.plotting import scatter_matrix
 from sklearn.preprocessing import OrdinalEncoder
+from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import MinMaxScaler
+from pandas.plotting import scatter_matrix
 from sklearn.impute import KNNImputer
 from model.model import Model
 
@@ -101,32 +103,44 @@ class PreProcessData:
             return df
             
 
-      def clean_dataframe(self, dataframe:pd.DataFrame, clean_option:str) -> pd.DataFrame:
+      def clean_miss_data(self, dataframe:pd.DataFrame, clean_method:str) -> pd.DataFrame:
             """Cleans data before any process from missing values
 
             Args:
-                clean_option (str): Three option has to fix missing values problem:
-                                          1. Get rid of the corresponding districts.
-                                          2. Get rid of the whole attribute.
-                                          3. Set the missing values to some value.
+                clean_method (str): Three options have to fix the missing values problem:
+                                          1. Get rid of the corresponding districts(drop_rows).
+                                          2. Get rid of the whole attribute(drop_column).
+                                          3. Set the missing values to some value(fill_miss).
 
             Returns:
                 pd.DataFrame: Cleaned dataframe
             """
            
-            if clean_option == "drop_rows":
-                  dataframe.dropna(subset=["total_bedrooms"], inplace=True) # Option 1
-            elif clean_option == "drop_column":
-                  dataframe.drop("total_bedrooms", axis=1) # Option 2
-            elif clean_option == "fill_miss":
-                  dataframe = self.knn_imputer(dataframe)
-                  # meadian = dataframe["total_bedrooms"].median()
-                  # dataframe["total_bedrooms"].fillna(meadian, inplace=True) # Option 3 
-
+            if clean_method == "drop_rows":
+                  dataframe.dropna(inplace=True) # Option 1
+            elif clean_method == "drop_column":
+                  columns_with_miss_vals = self.miss_val_columns(dataframe)
+                  dataframe = dataframe.drop(columns_with_miss_vals, axis=1) # Option 2
+            elif clean_method == "fill_miss":
+                  dataframe = self.knn_imputer(dataframe) # Option 3 
+                  # dataframe = self.median_imuter(dataframe) # Median method
+          
             return dataframe
       
+      def miss_val_columns(self, dataframe:pd.DataFrame) -> list[str]:
+            """Finds columns that contain missing values
+
+            Args:
+                dataframe (pd.DataFrame): Dataframe contains missing values
+
+            Returns:
+                list[str]: List of columns with miss values
+            """
+            columns_with_miss_vals = dataframe.columns[dataframe.isnull().any()].tolist()
+            return(columns_with_miss_vals)
+
       def knn_imputer(self, dataframe:pd.DataFrame) -> pd.DataFrame:
-            """Fills miss values of dataframe 
+            """Fills miss values of dataframe with knn method
 
             Args:
                 dataframe (pd.DataFrame): Dataframe contains missing values
@@ -142,18 +156,62 @@ class PreProcessData:
 
             return filled_dataframe
       
-      def one_hot_encoder(self, dataframe:pd.DataFrame):
+      def median_imuter(self, dataframe:pd.DataFrame) -> pd.DataFrame:
+            """Fills miss values of dataframe with median values of column
+
+            Args:
+                dataframe (pd.DataFrame): Dataframe contains missing values
+
+            Returns:
+                pd.DataFrame: Dataframe contains no missing values
+            """
+            meadian = dataframe["total_bedrooms"].median()
+            dataframe["total_bedrooms"].fillna(meadian, inplace=True) 
+
+            return dataframe
+
+      def text_encoder(self, dataframe:pd.DataFrame, method='one_hot_encoder') -> pd.DataFrame:
+            """Handels texts in dataframe.
+
+            Args:
+                dataframe (pd.DataFrame): The dataframe with text columns
+                method (str, optional): Method of how to counter with texts. 
+                                        Defaults to 'one_hot_encoder'.
+
+            Returns:
+                pd.DataFrame: Dataframe without text format columns.
+            """
+            ocean_prox_cat = dataframe[["ocean_proximity"]]
+            if method == 'one_hot_encoder':
+                  encoded_df = self.one_hot_encoder(ocean_prox_cat)
+            elif method == 'ordinal_encoder':
+                  encoded_df = self.ordinal_encoder(ocean_prox_cat)
+            return encoded_df
+
+      def one_hot_encoder(self, ocean_prox_cat):
+
             one_hot_encoder = OneHotEncoder()
-            ocean_proximity_cat = dataframe[["ocean_proximity"]]
-            encoded_cat = one_hot_encoder.fit_transform(ocean_proximity_cat)
-            df_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_proximity_cat.columns,
-                                          index=ocean_proximity_cat.index)
-            print(df_encoded_cat)
-            exit()
+            encoded_cat = one_hot_encoder.fit_transform(ocean_prox_cat)
+            df_encoded_cat = pd.DataFrame(encoded_cat, columns=ocean_prox_cat.columns,
+                                          index=ocean_prox_cat.index)
+            
             return df_encoded_cat
 
-      def ordinal_encoder(self, dataframe:pd.DataFrame):
+      def ordinal_encoder(self, ocean_prox_cat):
             ordinal_encoder = OrdinalEncoder()
-            ocean_proximity_cat = dataframe[["ocean_proximity"]]
-            encoded_cat = ordinal_encoder.fit_transform(ocean_proximity_cat)
+            encoded_cat = ordinal_encoder.fit_transform(ocean_prox_cat)
             return encoded_cat
+      
+      def norm_num_data(self, num_dataframe:pd.DataFrame, norm_method:str):
+            print(num_dataframe)
+            
+            exit()
+            if norm_method == "min_max":
+                  min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
+                  norm_data_min_max = min_max_scaler.fit_transform(num_dataframe)
+                  return norm_data_min_max
+      
+            elif norm_method == "Standard":
+                  std_scaler = StandardScaler()
+                  norm_data_std = std_scaler.fit_transform(num_dataframe)
+                  return norm_data_std
