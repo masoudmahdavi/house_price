@@ -30,32 +30,34 @@ class PreProcessData:
 
       def stratum_income(self, data:pd.DataFrame, n_strat_splits:int=1, hist:bool=False):
             data['income_cat'] = pd.cut(data['median_income'], 
-                                        bins=[0,1,2,3,4,5,6, np.inf], # np.inf means bigger than 6
-                                        labels=[0,1,2,3,4,5,6]) 
+                                        bins=[-2,-1,-0.5,0,0.5,1,2, np.inf], # np.inf means bigger than 6
+                                        labels=[0,1,2,3,4,5,6])
             
             if hist==True:
                   data['income_cat'].value_counts().sort_index().plot.bar(rot=0,grid=True)
                   plt.xlabel('Income category')
                   plt.ylabel('Number of districts')
                   plt.show()
-
+            
             splitter = StratifiedShuffleSplit(n_splits=n_strat_splits, test_size=0.2, random_state=42)
             split_parts = []
-
+            
             for train_split_index, test_split_index in splitter.split(data, data['income_cat']):
                   strat_train_set_n = data.iloc[train_split_index]
                   strat_test_set_n = data.iloc[test_split_index]
                   split_parts.append([strat_train_set_n, strat_test_set_n])
-            
+
             train:pd.DataFrame = split_parts[0][0]
             test:pd.DataFrame = split_parts[0][1]
-            print(train['income_cat'].value_counts().sort_index()/len(train))
-            print(test['income_cat'].value_counts().sort_index()/len(test))
+
+            print('\ndistribution of district income in train data set :\n', train['income_cat'].value_counts().sort_index()/len(train))
+            print('\ndistribution of district income in test data set :\n',test['income_cat'].value_counts().sort_index()/len(test))
+
             train, test = self._drop_income_cat(train, test)
             train, train_label = self.split_label(train)
             test, test_label = self.split_label(test)
             return (train, train_label), (test, test_label)
-      
+            
       def split_label(self, data:pd.DataFrame) -> tuple[pd.DataFrame]:
             """Splits data to labels and samples
 
@@ -124,7 +126,7 @@ class PreProcessData:
             elif clean_method == "fill_miss":
                   dataframe = self.knn_imputer(dataframe) # Option 3 
                   # dataframe = self.median_imuter(dataframe) # Median method
-          
+
             return dataframe
       
       def miss_val_columns(self, dataframe:pd.DataFrame) -> list[str]:
@@ -185,9 +187,11 @@ class PreProcessData:
             if method == 'one_hot_encoder':
                   encoded_df = self.one_hot_encoder(ocean_prox_cat)
                   encoded_df = self.add_encoded_to_df(encoded_df, dataframe)
+                  
             elif method == 'ordinal_encoder':
                   encoded_df = self.ordinal_encoder(ocean_prox_cat)
                   encoded_df = self.add_encoded_to_df(encoded_df, dataframe)
+                  
             return encoded_df
 
       def one_hot_encoder(self, ocean_prox_cat):
@@ -200,6 +204,7 @@ class PreProcessData:
 
       def add_encoded_to_df(self, encoded_df:pd.DataFrame, dataframe:pd.DataFrame) -> pd.DataFrame:
             dataframe['ocean_proximity'] = encoded_df
+            # dataframe['dense_matrix'] = dataframe['ocean_proximity'].apply(lambda x: x.toarray())
             return dataframe
 
       def ordinal_encoder(self, ocean_prox_cat):
@@ -212,10 +217,11 @@ class PreProcessData:
       def norm_num_data(self, num_dataframe:pd.DataFrame, norm_method:str):            
             if norm_method == "min_max":
                   min_max_scaler = MinMaxScaler(feature_range=(-1, 1))
-                  norm_data_min_max = min_max_scaler.fit_transform(num_dataframe)
-                  return norm_data_min_max
+                  norm_df = min_max_scaler.fit_transform(num_dataframe)
       
             elif norm_method == "Standard":
                   std_scaler = StandardScaler()
-                  norm_data_std = std_scaler.fit_transform(num_dataframe)
-                  return norm_data_std
+                  norm_df = std_scaler.fit_transform(num_dataframe)
+            
+            df = pd.DataFrame(norm_df, columns=num_dataframe.columns)
+            return df
