@@ -7,6 +7,8 @@ from utils.load_data import house_dataframe
 from utils.combine_df import combine_norm_and_text
 from utils.train.train import Train
 from utils.predict.predict import Predict
+from utils.eval.evaluation import Evaluation
+
 import pandas as pd
 
 
@@ -17,8 +19,9 @@ class HousePrice:
         self.raw_house_dataframe = house_dataframe(self.model)
         self.preprocess_data = PreProcessData(self.model)
         #self.Describe = Describe(self.model, self.raw_house_dataframe)
-        self.train_model = Train(self.model)
+        
         self.predict = Predict(self.model)
+        self.eval = Evaluation()
         
     def __call__(self, hist:bool=False) -> Any:
         #self.Describe.describe_data(hist=hist)
@@ -38,18 +41,22 @@ class HousePrice:
         normalized_df = self.preprocess_data.norm_num_data(house_extended_df, norm_method='Standard') #'min_max' or 'Standard'
         combined_normiaized_text_df = combine_norm_and_text(normalized_df, handled_text_df)
         df = self.preprocess_data.stratum_income(combined_normiaized_text_df, n_strat_splits=10, hist=False)
+        df = self.preprocess_data.convert_csr_to_dense_matrix(df)
         return df
         
     def train(self, df:tuple):
-        ml_model = self.train_model.linear_regression(df)
-        return ml_model
+        
+        self.train_model = Train(self.model, df)
+        # lin_reg_model = self.train_model.linear_regression()
+        # decision_trees_model = self.train_model.decision_trees()
+        random_forest_model = self.train_model.random_forest()
+        return random_forest_model
 
-    def prediction(self, ml_model):
-        prediction = self.predict.predict(ml_model)
+    def prediction(self, ml_model, data, data_lables):    
+        prediction = self.predict.predict(ml_model, data)
+        rmse = self.eval.cross_validation(data_lables, prediction, ml_model)
         return prediction
     
-    def performance_measure(self):
-        pass
        
 if __name__ == "__main__":
     model = Model()
@@ -57,6 +64,13 @@ if __name__ == "__main__":
     house_price(hist=True)
     df = house_price.preprocess()
     ml_model = house_price.train(df)
-    prediction = house_price.prediction(ml_model)
+    train = df[0][0]
+    train_label = df[0][1]
+    sample_data  = train
+    sample_label_data = train_label.values
+    
+    prediction = house_price.prediction(ml_model, sample_data, sample_label_data)
+    print(prediction)
+    print(sample_label_data)
     print('---------------------------------------')
     print('\n\nPredict process has been finished.\n')

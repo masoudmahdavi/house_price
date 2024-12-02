@@ -191,7 +191,6 @@ class PreProcessData:
         elif method == 'ordinal_encoder':
                 encoded_df = self.ordinal_encoder(ocean_prox_cat)
                 encoded_df = self.add_encoded_to_df(encoded_df, dataframe)
-                
         return encoded_df
 
     def one_hot_encoder(self, ocean_prox_cat):
@@ -227,3 +226,21 @@ class PreProcessData:
         df = pd.DataFrame(norm_df, columns=num_dataframe.columns)
         df["median_house_value"] = data_labels
         return df
+    
+    @staticmethod
+    def convert_csr_to_dense_matrix(df:pd.DataFrame) -> tuple:     
+        def sparse2dense(df:pd.DataFrame):
+            dense_matris = np.vstack(df['ocean_proximity'].apply(lambda x: x.toarray()[0]).to_numpy())
+            sparse_feature_columns = pd.DataFrame(
+            dense_matris, 
+            columns=[f"ocean_proximity_cat_{i}" for i in range(dense_matris.shape[1])],
+            index=df.index,
+            )
+            new_df = pd.concat([df.drop(columns=['ocean_proximity']), sparse_feature_columns], axis=1)
+            return new_df
+        
+        df_train = sparse2dense(df[0][0])
+        df_test = sparse2dense(df[1][0])
+        new_df = ((df_train, df[0][1]), (df_test, df[1][1]))
+
+        return new_df
