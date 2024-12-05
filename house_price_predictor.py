@@ -45,18 +45,25 @@ class HousePrice:
         return df
         
     def train(self, df:tuple):
-        
         self.train_model = Train(self.model, df)
         # lin_reg_model = self.train_model.linear_regression()
         # decision_trees_model = self.train_model.decision_trees()
         random_forest_model = self.train_model.random_forest()
         return random_forest_model
+        
+    def test(self, ml_model, test, test_lable):
+        test_predictions = ml_model.predict(test)
+        rmse = self.eval.eval(test_lable, test_predictions)
+        confidence = 0.95
+        confident_range = self.eval.confident(test_lable, test_predictions, confidence)
+        print(f'Confident range({confidence}): ', confident_range)
+        print('test RMSE: ', rmse)
 
-    def prediction(self, ml_model, data, data_lables):    
+    def prediction(self, ml_model, data:pd.DataFrame, data_lables):    
         prediction = self.predict.predict(ml_model, data)
         rmse = self.eval.cross_validation(data_lables, prediction, ml_model)
         return prediction
-    
+
        
 if __name__ == "__main__":
     model = Model()
@@ -65,10 +72,13 @@ if __name__ == "__main__":
     df = house_price.preprocess()
     ml_model = house_price.train(df)
     train = df[0][0]
+    test = df[1][0]
     train_label = df[0][1]
+    test_lable = df[1][1]
     sample_data  = train
     sample_label_data = train_label.values
-    
+
+    house_price.test(ml_model, test, test_lable)
     prediction = house_price.prediction(ml_model, sample_data, sample_label_data)
     print(prediction)
     print(sample_label_data)
