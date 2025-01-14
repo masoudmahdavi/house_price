@@ -18,15 +18,14 @@ class HousePrice:
         self.model = model
         self.raw_house_dataframe = house_dataframe(self.model)
         self.preprocess_data = PreProcessData(self.model)
-        #self.Describe = Describe(self.model, self.raw_house_dataframe)
+        self.Describe = Describe(self.model, self.raw_house_dataframe)
         
         self.predict = Predict(self.model)
         self.eval = Evaluation()
         
     def __call__(self, hist:bool=False) -> Any:
-        #self.Describe.describe_data(hist=hist)
-        #self.Describe.data_visualization(base_map=True)
-        pass
+        self.Describe.describe_data(hist=hist)
+        self.Describe.data_visualization(base_map=True)
 
     def preprocess(self) -> tuple[pd.DataFrame]:
         handled_text_df = self.preprocess_data.text_encoder(self.raw_house_dataframe,
@@ -62,6 +61,7 @@ class HousePrice:
     def prediction(self, ml_model, data:pd.DataFrame, data_lables):    
         prediction = self.predict.predict(ml_model, data)
         rmse = self.eval.cross_validation(data_lables, prediction, ml_model)
+        print('rmse: ', rmse)
         return prediction
 
        
