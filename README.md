@@ -8,7 +8,7 @@ In this stage, the dataset is prepared for training by handling missing or misfi
 ### Encoding
 - Categorical text features are processed using `OneHotEncoder` and `OrdinalEncoder`.
 
-### Handling Missing or Misfit Data
+### Handling Missing
 Three strategies are available for addressing missing or misfit data:
 1. `drop_rows`: Remove rows containing missing or invalid data.
 2. `drop_column`: Remove columns containing missing or invalid data.
